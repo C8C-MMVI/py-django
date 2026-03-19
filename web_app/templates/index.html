@@ -1,103 +1,178 @@
-<!-- <!doctype html>
-<html lang="en">
-  <head>
-    {% load static %}
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Django Static</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
-  </head>
-  <body>
-    <div class="container">
-      <h1>This is a sample Django website. Welcome!</h1>
-      <img src="{% static 'images/image.png' %}" alt="Random picture" />
-      <button onclick="changeText()">Click for more!</button>
-    </div>
-    <script src="{% static 'js/script.js' %}"></script>
-  </body>
-</html> -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f4f6f8;
-            color: #333;
-            padding: 40px;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2rem;
-            color: #2c3e50;
-        }
-
-        table {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            border-collapse: collapse;
-            background-color: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        thead {
-            background-color: #2c3e50;
-            color: #fff;
-        }
-
-        th, td {
-            padding: 14px 20px;
-            text-align: left;
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        tbody tr:hover {
-            background-color: #eaf0fb;
-        }
-
-        td:last-child {
-            color: #27ae60;
-            font-weight: bold;
-        }
-    </style>
+    <title>Students</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-    <h1>Products</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td>{{ product.product_name }}</td>
-                <td>{{ product.description }}</td>
-                <td>${{ product.price }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <header>
+        <h1>Student Management</h1>
+        <p class="subtitle">Manage student records</p>
+    </header>
+
+    <!-- CRUD NAV BUTTONS -->
+    <div class="crud-nav">
+        <button class="active" onclick="showPanel('create', this)">Create</button>
+        <button onclick="showPanel('read', this)">Read</button>
+        <button onclick="showPanel('update', this)">Update</button>
+        <button onclick="showPanel('delete', this)">Delete</button>
+    </div>
+
+    <!-- CREATE -->
+    <div id="create" class="panel active">
+        <h2>Add New Student</h2>
+        <form action="addStudent" method="post">
+            {% csrf_token %}
+            <input type="text" name="student_name" placeholder="Student Name" required>
+            <input type="text" name="course" placeholder="Course" required>
+            <input type="number" name="year" placeholder="Year" min="1" max="6" required>
+            <button type="submit" class="btn-primary">Add Student</button>
+        </form>
+    </div>
+
+    <!-- READ -->
+    <div id="read" class="panel">
+        <h2>All Students</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student Name</th>
+                    <th>Course</th>
+                    <th>Year</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ student.student_name }}</td>
+                    <td>{{ student.course }}</td>
+                    <td>{{ student.year }}</td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="4">No students found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- UPDATE -->
+    <div id="update" class="panel">
+        <h2>Update Student</h2>
+
+        <!-- STUDENT LIST -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Course</th>
+                    <th>Year</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.student_name }}</td>
+                    <td>{{ student.course }}</td>
+                    <td>{{ student.year }}</td>
+                    <td>
+                        <form action="updatePage" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="id" value="{{ student.id }}">
+                            <button type="submit" class="btn-warning">Edit</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="4">No students found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- INLINE EDIT FORM -->
+        {% if edit_student %}
+        <div class="edit-form-wrapper">
+            <h2>Editing: {{ edit_student.student_name }}</h2>
+            <form action="updateInfo" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="id" value="{{ edit_student.id }}">
+                <input type="text" name="newName" value="{{ edit_student.student_name }}" placeholder="Student Name" required>
+                <input type="text" name="newCourse" value="{{ edit_student.course }}" placeholder="Course" required>
+                <input type="number" name="newYear" value="{{ edit_student.year }}" placeholder="Year" min="1" max="6" required>
+                <div class="form-actions">
+                    <button type="submit" class="btn-warning">Save Changes</button>
+                    <a href="/" class="cancel-link">Cancel</a>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    <!-- DELETE -->
+    <div id="delete" class="panel">
+        <h2>Delete Student</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Course</th>
+                    <th>Year</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.student_name }}</td>
+                    <td>{{ student.course }}</td>
+                    <td>{{ student.year }}</td>
+                    <td>
+                        <form action="deleteStudent" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="id" value="{{ student.id }}">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="4">No students found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="page-meta" data-edit="{% if edit_student %}true{% else %}false{% endif %}" style="display:none;"></div>
+
+    <script>
+        function showPanel(name, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.crud-nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(name).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // Auto-open update panel if editing
+        window.addEventListener('DOMContentLoaded', () => {
+            const isEditing = document.getElementById('page-meta').dataset.edit === 'true';
+            if (isEditing) {
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.crud-nav button').forEach(b => b.classList.remove('active'));
+                document.getElementById('update').classList.add('active');
+                document.querySelectorAll('.crud-nav button')[2].classList.add('active');
+            }
+        });
+    </script>
+
 </body>
 </html>
