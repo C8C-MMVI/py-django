@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django_todo',
+        'NAME': 'django_todolist',
         'USER': 'postgres',
         'PASSWORD': '1234',
         'HOST': 'localhost',
@@ -127,4 +127,6 @@ STATIC_URL = 'static/'
 # CORS - Allow React dev server to talk to Django
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",   # React default port
+    "http://localhost:5173",  # Vite dev server
+
 ]

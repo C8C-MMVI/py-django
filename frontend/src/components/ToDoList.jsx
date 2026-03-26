@@ -415,62 +415,88 @@ const styles = `
   }
 `
 
+const API = 'http://127.0.0.1:8000/todolist/'
+
 function TodoList() {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('') // Track API errors
 
-  useEffect(() => {
-    fetchTasks()
-  }, [])
+  // Base API URL
+  const API = 'http://127.0.0.1:8000/todolist/'
 
+  // Fetch tasks from API
   const fetchTasks = async () => {
+    setLoading(true)
+    setError('')
     try {
-      const res = await axios.get('/api/todos/')
-      setTasks(res.data)
+      const res = await axios.get(API)
+      if (Array.isArray(res.data)) {
+        setTasks(res.data)
+      } else {
+        setTasks([]) // fallback if API returns something unexpected
+      }
     } catch (err) {
       console.error('Error fetching tasks:', err)
+      setError('Failed to load tasks.')
     } finally {
       setLoading(false)
     }
   }
 
+  useEffect(() => {
+    fetchTasks()
+  }, [])
+
+  // Create a new task
   const createTask = async () => {
     if (!title.trim()) return
+    setError('')
     try {
-      await axios.post('/api/todos/', { title, description, completed: false })
+      await axios.post(API, { title, description, completed: false })
       setTitle('')
       setDescription('')
       fetchTasks()
     } catch (err) {
       console.error('Error creating task:', err)
+      setError('Failed to create task.')
     }
   }
 
+  // Toggle completion
   const toggleTask = async (task) => {
+    setError('')
     try {
-      await axios.put(`/api/todos/${task.id}/`, { ...task, completed: !task.completed })
-      fetchTasks()
+      await axios.patch(`${API}${task.id}/`, { completed: !task.completed })
+      setTasks(prev =>
+        prev.map(t => (t.id === task.id ? { ...t, completed: !t.completed } : t))
+      )
     } catch (err) {
       console.error('Error updating task:', err)
+      setError('Failed to update task.')
     }
   }
 
+  // Delete a task
   const deleteTask = async (id) => {
+    setError('')
     try {
-      await axios.delete(`/api/todos/${id}/`)
-      fetchTasks()
+      await axios.delete(`${API}${id}/`)
+      setTasks(prev => prev.filter(t => t.id !== id))
     } catch (err) {
       console.error('Error deleting task:', err)
+      setError('Failed to delete task.')
     }
   }
 
+  // Add task on Enter
   const handleKey = (e) => {
     if (e.key === 'Enter') createTask()
   }
 
-  const done = tasks.filter(t => t.completed).length
+  const doneCount = tasks.filter(t => t.completed).length
 
   if (loading) {
     return (
@@ -491,7 +517,6 @@ function TodoList() {
       <style>{styles}</style>
       <div className="todo-root">
         <div className="todo-wrap">
-
           {/* Header */}
           <div className="todo-header">
             <p className="todo-eyebrow">— your list</p>
@@ -500,6 +525,9 @@ function TodoList() {
               <span className="todo-title-underline" />
             </h1>
           </div>
+
+          {/* Error */}
+          {error && <p style={{ color: 'red', marginBottom: '12px' }}>{error}</p>}
 
           {/* Add Task */}
           <div className="add-card">
@@ -530,10 +558,10 @@ function TodoList() {
           {tasks.length > 0 && (
             <div className="task-count-row">
               <span className="task-count-label">
-                {done}/{tasks.length} done
+                {doneCount}/{tasks.length} done
               </span>
               <span className="task-count-badge">
-                {tasks.length - done} left
+                {tasks.length - doneCount} left
               </span>
             </div>
           )}
@@ -588,7 +616,6 @@ function TodoList() {
               ))}
             </ul>
           )}
-
         </div>
       </div>
     </>
