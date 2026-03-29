@@ -6,7 +6,7 @@ export default function ProtectedRoute({ children }) {
   const [auth, setAuth] = useState(null)
 
   useEffect(() => {
-    api.get('/api/todos/')
+    api.get('/api/auth/me/')
       .then(() => setAuth(true))
       .catch(() => setAuth(false))
   }, [])

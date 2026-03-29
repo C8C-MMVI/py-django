@@ -53,3 +53,10 @@ class ChangePasswordView(APIView):
         user.set_password(request.data.get('new_password'))
         user.save()
         return Response({'message': 'Password updated successfully.'})
+
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({'username': request.user.username})
